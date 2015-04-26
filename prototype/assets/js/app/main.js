@@ -36,9 +36,11 @@
                     pixelAligned    : true,
                     upperLeftOrigin : true
                 });
-                
+               
+                var nx = 108;
+                var ny = 192; 
                 var bounds = new GNOCCHI.Rect( 0, 0, 1, 1 );
-                this.fluids = new Fluids2D( 108, 192, bounds );
+                this.fluids = new Fluids2D( nx, ny, bounds );
                 this.fluids.enableUv = true;
                 this.fluids.wrapBoundary = true;
 

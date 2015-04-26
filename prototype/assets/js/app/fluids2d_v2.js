@@ -39,6 +39,7 @@ var Fluids2D = function( nx, ny, bounds ) {
     this.dt = 0.1;
 
     this.velDiss = 0.999999999;
+    this.velDiss = 0.99;
     this.denDiss = 0.99000;
     this.uvDiss  = 0.99999;
 
@@ -85,6 +86,7 @@ var Fluids2D = function( nx, ny, bounds ) {
             this.v1[idx] = v;
         }
     }
+/*
     //
     var centerX = 0.5*this.resX;
     var centerY = 0.5*this.resY;
@@ -111,6 +113,7 @@ var Fluids2D = function( nx, ny, bounds ) {
             }
         }
     }
+*/
 }
 
 Fluids2D.prototype = {
@@ -155,7 +158,7 @@ Fluids2D.prototype = {
                 { x: x1, y: y1, s: a1*b1 },
             ];
 
-            var scale = 250.0;
+            var scale = 100.0;
             for( var k = 0; k < points.length; ++k ) {
                 var p = points[k];
                 //var idx = 2*(p.y*this.resX + p.x);
@@ -209,7 +212,7 @@ Fluids2D.prototype = {
                 { x: x1, y: y1, s: a1*b1 },
             ];
 
-            var scale =10.0;
+            var scale = 10.0;
             for( var k = 0; k < points.length; ++k ) {
                 var p = points[k];
                 var idx = p.y*this.resX + p.x;
