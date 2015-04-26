@@ -227,7 +227,7 @@
                         var u = this.fluids.u1[idx];
                         var v = this.fluids.v1[idx];
                         this.uv[2*idx + 0] = u;
-                        this.uv[3*idx + 1] = v;
+                        this.uv[2*idx + 1] = v;
 
 //*/                      
                     }
