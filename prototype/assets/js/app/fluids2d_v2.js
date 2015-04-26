@@ -38,11 +38,13 @@ var Fluids2D = function( nx, ny, bounds ) {
 
     this.dt = 0.1;
 
-    this.velDiss = 0.99999;
+    this.velDiss = 0.999999999;
     this.denDiss = 0.99000;
+    this.uvDiss  = 0.99999;
 
     this.velVisc = 0.1;
     this.denVisc = 0.1;
+    this.uvVisc  = 0.1;
 
     this.vorticityScale = 0.25;
 
@@ -75,7 +77,7 @@ var Fluids2D = function( nx, ny, bounds ) {
     for( var j = 0; j < this.resY; ++j ) {
         for( var i = 0; i < this.resX; ++i ) {
             var u = i*dx;
-            var v = i*dy;
+            var v = j*dy;
             var idx = j*this.resX + i;
             this.u0[idx] = u;
             this.v0[idx] = v;
@@ -207,7 +209,7 @@ Fluids2D.prototype = {
                 { x: x1, y: y1, s: a1*b1 },
             ];
 
-            var scale = 25.0;
+            var scale =10.0;
             for( var k = 0; k < points.length; ++k ) {
                 var p = points[k];
                 var idx = p.y*this.resX + p.x;
@@ -540,7 +542,7 @@ Fluids2D.prototype = {
         this.computeDivergence( this.xvel1, this.yvel1, this.div );
         this.setBoundary( this.div );
 
-        this.solvePressure( 5, this.div, this.prs );
+        this.solvePressure( 32, this.div, this.prs );
         this.setBoundary( this.prs );
 
         this.subtractGradient( this.prs, this.xvel1, this.yvel1 );
@@ -567,8 +569,8 @@ Fluids2D.prototype = {
         }
 
         if( this.enableUv ) {
-            this.advectAndDiffuse( this.uvDiss, this.uvVisc, this.dt, this.xvel0, this.yvel0, this.u0, this.v1 );
-            this.advectAndDiffuse( this.uvDiss, this.uvVisc, this.dt, this.xvel0, this.yvel0, this.u0, this.v1 );
+            this.advectAndDiffuse( this.uvDiss, this.uvVisc, this.dt, this.xvel0, this.yvel0, this.u0, this.u1 );
+            this.advectAndDiffuse( this.uvDiss, this.uvVisc, this.dt, this.xvel0, this.yvel0, this.v0, this.v1 );
             this.setBoundary( this.u1 );
             this.setBoundary( this.v1 );
         }
@@ -584,6 +586,16 @@ Fluids2D.prototype = {
             var tmp = this.den0;
             this.den0 = this.den1;
             this.den1 = tmp;
+        }
+
+        if( this.enableUv ) {
+            var tmp = this.u0;
+            this.u0 = this.u1;
+            this.u1 = tmp;
+
+            var tmp = this.v0;
+            this.v0 = this.v1;
+            this.v1 = tmp;
         }
     },
 

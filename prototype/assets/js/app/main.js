@@ -39,8 +39,8 @@
                 
                 var bounds = new GNOCCHI.Rect( 0, 0, 1, 1 );
                 this.fluids = new Fluids2D( 108, 192, bounds );
-                this.enableUv = true;
-                //this.fluids.wrapBoundary = true;
+                this.fluids.enableUv = true;
+                this.fluids.wrapBoundary = true;
 
                 /// Texture
                 this.textureData = new Uint8Array( 3*this.fluids.resX*this.fluids.resY );
@@ -55,6 +55,74 @@
                 // Set and enable the shader will be used to draw these objects.
                 this.rectMesh.acquireAttribLocations( this.shader );
                 this.rectMesh.enableAttribs();
+
+                // ===============================================================================================================
+                var n = this.fluids.resX*this.fluids.resY;
+                var initialIndices   = [];
+                var initialPositions = new Array( 3*n );
+                var initialUvs       = new Array( 2*n );
+
+                // Poisitions/uv
+                this.screenBounds = new GNOCCHI.Rect( 0, 0, this.getCanvasWidth(), this.getCanvasHeight() );
+                var w  = this.screenBounds.getWidth();
+                var h  = this.screenBounds.getHeight();
+                var dx = w/(this.fluids.resX - 1);
+                var dy = this.screenBounds.getHeight()/(this.fluids.resY - 1);
+                console.log( "dx: " + dx + ", dy: " + dy );
+                for( var j = 0; j < this.fluids.resY; ++j ) {
+                    for( var i = 0; i < this.fluids.resX; ++i ) {
+                        var idx  = j*this.fluids.resX + i;
+                        var xidx = 3*idx + 0;
+                        var yidx = 3*idx + 1;
+                        var zidx = 3*idx + 2;
+
+                        var x = this.screenBounds.x1 + i*dx;
+                        var y = this.screenBounds.y1 + j*dy;
+                        var z = 0.0;
+                        
+                        initialPositions[xidx] = x; 
+                        initialPositions[yidx] = y; 
+                        initialPositions[zidx] = z;
+                        initialUvs[2*idx + 0] = i/(this.fluids.resX - 1);
+                        initialUvs[2*idx + 1] = j/(this.fluids.resY - 1);
+                    }
+                }
+
+                // Triangles
+                for( var j = 0; j < (this.fluids.resY - 1); ++j ) {
+                    for( var i = 0; i < (this.fluids.resX - 1); ++i ) {
+                        var idx0 = (j + 0)*this.fluids.resX + (i + 0);
+                        var idx1 = (j + 1)*this.fluids.resX + (i + 0);
+                        var idx2 = (j + 1)*this.fluids.resX + (i + 1);
+                        var idx3 = (j + 0)*this.fluids.resX + (i + 1);
+                        //
+                        initialIndices.push( idx0 );
+                        initialIndices.push( idx1 );
+                        initialIndices.push( idx2 );
+                        //
+                        initialIndices.push( idx0 );
+                        initialIndices.push( idx2 );
+                        initialIndices.push( idx3 );
+                    }
+                }
+        
+                //console.log( "Num triMesh indieces: " + initialIndices.length );
+
+                this.triMesh = new GNOCCHI.TriMesh3D();
+                this.triMesh.setIndices( initialIndices );
+                this.triMesh.setPositions( initialPositions );
+                this.triMesh.setUvs( initialUvs );
+                this.triMesh.update();
+                this.triMesh.acquireAttribLocations( this.shader );
+                this.triMesh.enableAttribs();
+
+                this.uv = this.triMesh.uvs.clientData;
+
+                /// Texture
+                this.imageTex = new GNOCCHI.Texture2D.create( "assets/img/stormtrooper.jpg" );
+
+                // ===============================================================================================================
+                
 
                 /// Set some WebGL rendering parameters. 
                 this.renderer.setClearColor( GNOCCHI.Color.create( 0, 0, 0 ) );
@@ -145,16 +213,30 @@
                         this.textureData[3*idx + 1] = this.fluids.vel1[2*idx + 1];
                         this.textureData[3*idx + 2] = 0;
 /*/
-                        var v = Math.min( 255, 255*this.fluids.den1[idx] );
-                        this.textureData[3*idx + 0] = v;
-                        this.textureData[3*idx + 1] = v*0.65;
-                        this.textureData[3*idx + 2] = 0;
-//*/
+                        //var v = Math.min( 255, 255*this.fluids.den1[idx] );
+                        //this.textureData[3*idx + 0] = v;
+                        //this.textureData[3*idx + 1] = v*0.65;
+                        //this.textureData[3*idx + 2] = 0;
 
+                        //var u = Math.min( 255, 255*this.fluids.u1[idx] );
+                        //var v = Math.min( 255, 255*this.fluids.v1[idx] );
+                        //this.textureData[3*idx + 0] = u;
+                        //this.textureData[3*idx + 1] = v;
+                        //this.textureData[3*idx + 2] = 0;
+
+                        var u = this.fluids.u1[idx];
+                        var v = this.fluids.v1[idx];
+                        this.uv[2*idx + 0] = u;
+                        this.uv[3*idx + 1] = v;
+
+//*/                      
                     }
                 }
                 //
-                this.texture.texImage2DFromArrayRGB( this.fluids.resX, this.fluids.resY, this.textureData );
+                //this.texture.texImage2DFromArrayRGB( this.fluids.resX, this.fluids.resY, this.textureData );
+
+                this.triMesh.uvs.dirty = true;
+                this.triMesh.update();
             }},
 
             draw : { value : function() {
@@ -164,9 +246,18 @@
                 /// Draw a image texture.
                 this.shader.bind();
                 this.shader.uniform( "mvp", this.cam.mvp() );
+                this.shader.uniform( "tex", this.imageTex );
+                this.triMesh.draw();
+                this.shader.unbind();
+
+/*
+                /// Draw a image texture.
+                this.shader.bind();
+                this.shader.uniform( "mvp", this.cam.mvp() );
                 this.shader.uniform( "tex", this.texture );
                 this.rectMesh.draw();
                 this.shader.unbind();
+*/
 
 /*
                 if( this.elapsedFrames > 0 && 0 == (this.elapsedFrames % 240) ) {
