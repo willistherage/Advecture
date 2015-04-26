@@ -36,16 +36,21 @@ var Fluids2D = function( nx, ny, bounds ) {
 
     this.wrapBoundary = false;
 
-    this.dt = 0.1;
+    // Time step - larger values make fluid move faster
+    this.dt = 0.07;
 
-    this.velDiss = 0.999999999;
-    this.velDiss = 0.99;
+    // Dissipation - values closer to zero dissipate slower
+    this.velDiss = 0.99900;
     this.denDiss = 0.99000;
     this.uvDiss  = 0.99999;
 
+    // Viscosity - supposedly the viscosity - doesn't seem to have much impact
     this.velVisc = 0.1;
     this.denVisc = 0.1;
     this.uvVisc  = 0.1;
+
+    // Number of pressure runs - large rumers makes fluid movement appear slower
+    this.pressureIters = 32;
 
     this.vorticityScale = 0.25;
 
@@ -545,7 +550,7 @@ Fluids2D.prototype = {
         this.computeDivergence( this.xvel1, this.yvel1, this.div );
         this.setBoundary( this.div );
 
-        this.solvePressure( 32, this.div, this.prs );
+        this.solvePressure( this.pressureIters, this.div, this.prs );
         this.setBoundary( this.prs );
 
         this.subtractGradient( this.prs, this.xvel1, this.yvel1 );
