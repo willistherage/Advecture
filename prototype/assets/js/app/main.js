@@ -36,7 +36,8 @@
                     pixelAligned    : true,
                     upperLeftOrigin : true
                 });
-               
+                
+                // Grid Settings
                 var nx = 108;
                 var ny = 192; 
                 var bounds = new GNOCCHI.Rect( 0, 0, 1, 1 );
